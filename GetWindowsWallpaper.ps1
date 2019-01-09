@@ -1,26 +1,30 @@
 [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") 
 
+#folder paths
 $imageOrigin = "C:\Users\david\AppData\Local\Packages\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\LocalState\Assets\*"
-$quickStopFolder = "C:\Users\david\Pictures\millifaersla\"
-$destinationFolder = "C:\Users\david\Pictures\desktop myndir"
+$conversionFolder = "C:\Users\david\Pictures\conversion\"
+$destinationFolder = "C:\Users\david\Pictures\desktop pictures"
 
-#get pictures from assets
-Copy-Item $imageOrigin  -Destination $quickStopFolder -Recurse
+	#get pictures from assets and store them in a temporary folder
+	Copy-Item $imageOrigin  -Destination $conversionFolder -Recurse
 
-# change extension to jpg
-Dir $quickStopFolder * | Rename-Item -NewName { [io.path]::ChangeExtension($_.name, "jpg") }
+	#give them a .jpg extension
+	Dir $conversionFolder * | Rename-Item -NewName { [io.path]::ChangeExtension($_.name, "jpg") }
 
-robocopy /xc /xn /xo $quickStopFolder $destinationFolder
+	#copy files from the conversion folder to the destination folder while checking if they already exist in the destination
+	robocopy /xc /xn /xo $conversionFolder $destinationFolder
 
-Get-ChildItem $destinationFolder *.jpg | ForEach-Object {
-	$img = [Drawing.Image]::FromFile($_.FullName)
-	if($img.Width -lt 1920 -or $img.Height -lt 1080) {
-		$_
-		$img.Dispose()
-		Remove-Item $_.FullName
-    }
-}
+	#erase all pictures that are not pictures and are smaller than desktop size
+	Get-ChildItem $destinationFolder *.jpg | ForEach-Object {
+		$img = [Drawing.Image]::FromFile($_.FullName)
+		if($img.Width -lt 1920 -or $img.Height -lt 1080) {
+			$_
+			$img.Dispose()
+			Remove-Item $_.FullName
+		}
+	}
 
-Get-ChildItem -Path $quickStopFolder -Include *.* -File -Recurse | foreach { $_.Delete()}
+#clean up conversion folder
+Get-ChildItem -Path $conversionFolder -Include *.* -File -Recurse | foreach { $_.Delete()}
 
 
